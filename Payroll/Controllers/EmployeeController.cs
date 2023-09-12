@@ -47,44 +47,66 @@ namespace Payroll.Controllers
             }
             return Ok();
         }
-        [HttpDelete("id")]
+        [HttpDelete("salaryId")]
         public IActionResult Delete(int id)
         {
             _employeeService.Delete(id);
             return Ok();
 
         }
-        [HttpPut("{datatype}/{id}")]
-        public IActionResult Update(int id, string datatype, [FromBody] RequestBodyModel requestBody)
+        [HttpPut("{datatype}/{salaryId}")]
+        public async Task<IActionResult> Update(int salaryId, string datatype, [FromBody] RequestBodyModel requestBody)
         {
+            var data = requestBody.Data;
+            if (string.IsNullOrEmpty(data))
+                return BadRequest(ModelState);
 
+            datatype = datatype.ToLower();
+            EmployeeSalary? model;
+            try
+            {
+                model = ExtractDataFromBody(datatype, requestBody);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            if (model == null) model = new EmployeeSalary();
+            try
+            {
+                var employee = await _employeeService.UpdateData(salaryId, requestBody, model);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
             return Ok();
 
         }
-        [HttpGet("{id}/{date}")]
-        public async Task<ActionResult<List<EmployeeSalary>>> GetSalaryInfoForMonth(int id, string date)
+        [HttpGet("{employeeId}/{date}")]
+        public async Task<ActionResult<List<EmployeeSalary>>> GetSalaryInfoForMonth(int employeeId, string date)
         {
 
-            var s = await _employeeService.GetSalaryInfoForMonth(id, date);
+            var s = await _employeeService.GetSalaryInfoForMonth(employeeId, date);
             return Ok(s);
         }
 
 
-        [HttpGet("{id}/{startDate}/{endDate}")]
-        public async Task<ActionResult<List<EmployeeSalary>>> GetAllSalaryInfoForPeriodOfTime(int id, string startDate, string endDate)
+        [HttpGet("{employeeId}/{startDate}/{endDate}")]
+        public async Task<ActionResult<List<EmployeeSalary>>> GetRange(int employeeId, string startDate, string endDate)
         {
            
             using var connection = new SqlConnection(_employeeService.GetConnectionString());
             string sql = @"SELECT * 
                FROM Salary 
                INNER JOIN Employee ON Employee.EmployeeId=Salary.EmployeeId 
-               WHERE Employee.EmployeeId = @EmployeeId AND Salary.Date > @StartDate and Salary.Date < @EndDate ";
+               WHERE Employee.EmployeeId = @EmployeeId AND Salary.Date >= @StartDate and Salary.Date <= @EndDate ";
 
 
             DateTime start = DateTimeHelper.ConverPersianDateToMiladi(startDate);
             DateTime end = DateTimeHelper.ConverPersianDateToMiladi(endDate);
 
-            var parameters = new { EmployeeId = id, StartDate = start, EndDate = end };
+            var parameters = new { EmployeeId = employeeId, StartDate = start, EndDate = end };
 
             IEnumerable<Salary> result = await connection.QueryAsync<Salary, Employee, Salary>(sql, (salary, employee) =>
             {
