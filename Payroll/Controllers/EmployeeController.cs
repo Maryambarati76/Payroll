@@ -39,7 +39,6 @@ namespace Payroll.Controllers
             try
             {
                 var employee = await _employeeService.CreateData(requestBody, model);
-                // employee.GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

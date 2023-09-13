@@ -67,6 +67,7 @@ namespace Payroll.Services
             object[] methodParams = new object[] { model.BasicSalary, model.Allowance };
 
             var overTimeResult = (decimal)method.Invoke(classInstance, methodParams);
+            decimal taxPeriod = (decimal)(9 / 100) * model.BasicSalary;
             salary = new Salary
             {
                 Employee = employee,
@@ -74,7 +75,7 @@ namespace Payroll.Services
                 Transportation = model.Transportation,
                 BasicSalary = model.BasicSalary,
                 Date = model.Date,
-                Amount = model.BasicSalary + model.Allowance + model.Transportation + overTimeResult
+                Amount = model.BasicSalary + model.Allowance + model.Transportation + overTimeResult-taxPeriod
             };
             _context.Salary.Add(salary);
             await _context.SaveChangesAsync();
@@ -88,14 +89,6 @@ namespace Payroll.Services
             if (salary == null)
                 throw new Exception("Salary Not Found");
 
-
-            var employee = _context.Employee.SingleOrDefault(x => x.EmployeeId == salary.EmployeeId);
-            employee.FirstName = model.FirstName;
-            employee.LastName = model.LastName;
-            _context.Employee.Update(employee);
-            await _context.SaveChangesAsync();
-
-
             var classInstance = new OvetimePolicies.OvetimePolicies();
 
             MethodInfo method = classInstance.GetType().GetMethod(requestBody.OverTimeCalculator);
@@ -106,19 +99,20 @@ namespace Payroll.Services
             object[] methodParams = new object[] { model.BasicSalary, model.Allowance };
 
             var overTimeResult = (decimal)method.Invoke(classInstance, methodParams);
+            decimal taxPeriod= (decimal)(9 / 100) * model.BasicSalary;
 
             salary.Allowance = model.Allowance;
             salary.Transportation = model.Transportation;
             salary.BasicSalary = model.BasicSalary;
             salary.Date = model.Date;
-            salary.Amount = model.BasicSalary + model.Allowance + model.Transportation + overTimeResult;
+            salary.Amount = model.BasicSalary + model.Allowance + model.Transportation + overTimeResult-taxPeriod;
          
             _context.Salary.Update(salary);
             await _context.SaveChangesAsync();
             return salary;
 
         }
-
+       
         public void Delete(int id)
         {
             var salary = _context.Salary.Find(id);

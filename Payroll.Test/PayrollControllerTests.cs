@@ -18,7 +18,7 @@ namespace Payroll.Test
             _controller = new EmployeeController(_mockDbContext.Object);
         }
         [Fact]
-        public void GetRecord_WithValidData_ReturnsOkResult()
+        public void GetRecord_WithValidData_ReturnsOkResult_success()
         {
             // Arrange
             var requestBody = new RequestBodyModel
@@ -37,7 +37,7 @@ namespace Payroll.Test
             Assert.IsType<OkObjectResult>(result.Result.Result);
         }
         [Fact]
-        public void AddRecord_WithValidData_ReturnsOkResult()
+        public void AddRecord_WithValidData_ReturnsOkResult_success()
         {
             // Arrange
             var requestBody = new RequestBodyModel
